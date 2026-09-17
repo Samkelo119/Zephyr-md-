@@ -1,0 +1,23 @@
+{
+  "name": "sᴋʏʙʟᴜᴇ-ᴍᴅ",
+  "version": "1.2.0",
+  "description": "WhatsApp bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "start:pairing": "node pairing-server.js",
+    "test": "node test_bot.js",
+    "check": "node --check index.js && node --check helper.js && node --check menu.js && node --check pair.js && node --check pairing-server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@mrlegendbot/baileys": "1.2.7",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "ffmpeg-static": "^5.2.0",
+    "node-fetch": "^2.7.0",
+    "pino": "^9.3.2"
+  }
+}

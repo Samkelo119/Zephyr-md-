@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: zephyr-md
+    env: node
+    buildCommand: cd zephyr-bot && npm ci
+    startCommand: cd zephyr-bot && npm start
+    healthCheckPath: /api/status
+    disk:
+      name: zephyr-storage
+      mountPath: /opt/render/project/src/zephyr-bot/storage
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ZEPHYR_STORAGE_DIR
+        value: /opt/render/project/src/zephyr-bot/storage
+      - key: MAIN_PAIR_SECRET
+        generateValue: true
+      - key: PAIRING_API_KEY
+        generateValue: true

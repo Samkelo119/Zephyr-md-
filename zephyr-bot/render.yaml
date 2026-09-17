@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: zephyr-md
+    env: node
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/status
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MAIN_PAIR_SECRET
+        generateValue: true
+      - key: PAIRING_API_KEY
+        generateValue: true

@@ -1,0 +1,11 @@
+node_modules/
+.env
+session/
+sessions/
+data/botcustom_media/
+data/comments.json
+data/command-state.json
+data/v1-cool-state.json
+data/pairs.json
+*.log
+npm-debug.log*
