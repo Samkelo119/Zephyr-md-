@@ -341,7 +341,6 @@ global.getWaVersion = async function (fetchLatestWaWebVersion, { retries = 3, de
 };
 
 module.exports = {
-    PairCoadName: 'MDHSKYBT',
     botname: global.botname,
     version: global.version,
     channelJid: global.chid,
