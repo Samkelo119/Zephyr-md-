@@ -10,7 +10,7 @@
     "check": "node --check index.js && node --check helper.js && node --check menu.js && node --check pair.js && node --check pairing-server.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "dependencies": {
     "@mrlegendbot/baileys": "1.2.7",
