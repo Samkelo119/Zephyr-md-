@@ -259,7 +259,13 @@ app.get('/api/pair-status', (req, res) => {
 
 app.listen(PORT, async () => {
     console.log('🚀 Server listening on port ' + PORT);
-    await loadBaileys();
-    startBot();
-    pairSystem.restorePairs(null);
+    try {
+        await loadBaileys();
+        await startBot();
+        pairSystem.restorePairs(null);
+    } catch (error) {
+        botStatus = 'error';
+        console.error('⚠️ WhatsApp runtime failed to start:', error.message || error);
+        console.error('The pairing website is still available; restart after fixing the WhatsApp dependency or network access.');
+    }
 });
