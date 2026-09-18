@@ -2,12 +2,21 @@ services:
   - type: web
     name: zephyr-md
     env: node
+    plan: starter
     buildCommand: npm ci
     startCommand: npm start
     healthCheckPath: /api/status
+    disk:
+      name: zephyr-storage
+      mountPath: /opt/render/project/src/storage
+      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "20"
+      - key: ZEPHYR_STORAGE_DIR
+        value: /opt/render/project/src/storage
       - key: MAIN_PAIR_SECRET
         generateValue: true
       - key: PAIRING_API_KEY
