@@ -2,6 +2,7 @@ services:
   - type: web
     name: zephyr-md
     env: node
+    plan: starter
     buildCommand: cd zephyr-bot && npm ci
     startCommand: cd zephyr-bot && npm start
     healthCheckPath: /api/status
@@ -12,6 +13,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: "20"
       - key: ZEPHYR_STORAGE_DIR
         value: /opt/render/project/src/zephyr-bot/storage
       - key: MAIN_PAIR_SECRET
