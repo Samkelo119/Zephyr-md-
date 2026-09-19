@@ -2,22 +2,51 @@ require('./config');
 
 const express = require('express');
 const crypto = require('crypto');
-const fs = require('fs');
 const path = require('path');
 const pairSystem = require('./pair');
-const { cleanPhoneNumber } = require('./helper');
+const { cleanPhoneNumber, countFeatures } = require('./helper');
 
 const app = express();
 const PORT = Number(process.env.PAIRING_PORT || process.env.PORT || 15449);
 const API_KEY = String(process.env.PAIRING_API_KEY || '');
+
+// Rate limiting: one window for the public browser website, one for the API.
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT_MAX = 5;
-const rateBuckets = new Map();
+const WEB_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const WEB_RATE_LIMIT_MAX = 8;
+const apiRateBuckets = new Map();
+const webRateBuckets = new Map();
 const serverStartedAt = Date.now();
 
+app.set('trust proxy', 1);
 app.disable('x-powered-by');
+app.disable('etag');
 app.use(express.json({ limit: '16kb' }));
-app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+
+// Baseline security + performance headers on every response.
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    if (req.secure) {
+        res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+    }
+    next();
+});
+
+// Serve static assets with long-lived caching for speed.
+app.use(express.static(path.join(__dirname, 'public'), {
+    index: false,
+    etag: true,
+    maxAge: '1h',
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('index.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
 
 function safeEqual(left, right) {
     const a = Buffer.from(String(left || ''));
@@ -30,23 +59,39 @@ function getClientKey(req) {
         .split(',')[0].trim();
 }
 
-function checkRateLimit(req, res, next) {
-    const key = getClientKey(req);
-    const now = Date.now();
-    const existing = rateBuckets.get(key) || { startedAt: now, count: 0 };
-    if (now - existing.startedAt >= RATE_LIMIT_WINDOW_MS) {
-        existing.startedAt = now;
-        existing.count = 0;
-    }
-    existing.count += 1;
-    rateBuckets.set(key, existing);
-    if (existing.count > RATE_LIMIT_MAX) {
-        const retryAfter = Math.ceil((RATE_LIMIT_WINDOW_MS - (now - existing.startedAt)) / 1000);
-        res.set('Retry-After', String(retryAfter));
-        return res.status(429).json({ error: 'Too many pairing requests. Try again later.' });
-    }
-    next();
+function makeRateLimiter(buckets, windowMs, max, label) {
+    return function rateLimit(req, res, next) {
+        const key = getClientKey(req);
+        const now = Date.now();
+        const existing = buckets.get(key) || { startedAt: now, count: 0 };
+        if (now - existing.startedAt >= windowMs) {
+            existing.startedAt = now;
+            existing.count = 0;
+        }
+        existing.count += 1;
+        buckets.set(key, existing);
+        if (existing.count > max) {
+            const retryAfter = Math.ceil((windowMs - (now - existing.startedAt)) / 1000);
+            res.set('Retry-After', String(retryAfter));
+            return res.status(429).json({ error: 'Too many ' + label + ' requests. Please wait a moment and try again.' });
+        }
+        next();
+    };
 }
+
+const apiRateLimit = makeRateLimiter(apiRateBuckets, RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX, 'pairing');
+const webRateLimit = makeRateLimiter(webRateBuckets, WEB_RATE_LIMIT_WINDOW_MS, WEB_RATE_LIMIT_MAX, 'pairing');
+
+// Periodically drop stale rate-limit buckets so memory stays flat under load.
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, bucket] of apiRateBuckets) {
+        if (now - bucket.startedAt >= RATE_LIMIT_WINDOW_MS) apiRateBuckets.delete(key);
+    }
+    for (const [key, bucket] of webRateBuckets) {
+        if (now - bucket.startedAt >= WEB_RATE_LIMIT_WINDOW_MS) webRateBuckets.delete(key);
+    }
+}, 5 * 60 * 1000).unref();
 
 function requireApiKey(req, res, next) {
     if (!API_KEY) {
@@ -73,13 +118,59 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+/* -------------------------------------------------------------------------- */
+/*  Public browser routes (no API key) — these power the pairing website.      */
+/*  Protected by rate limiting and input validation only, safe to call from    */
+/*  the front-end without exposing the private PAIRING_API_KEY.                 */
+/* -------------------------------------------------------------------------- */
+
+app.post('/api/web/pair', webRateLimit, async (req, res) => {
+    const checked = validateNumber(req.body?.number);
+    if (checked.error) return res.status(400).json(checked);
+    try {
+        const result = await pairSystem.addWebPair(checked.number, null);
+        if (result.error) return res.status(409).json({ error: result.error });
+        return res.status(200).json({
+            ok: true,
+            number: result.number,
+            code: result.code,
+            status: pairSystem.getSessionStatus(result.number),
+            message: 'Enter this code in WhatsApp → Linked Devices before it expires.'
+        });
+    } catch (error) {
+        return res.status(502).json({ error: error.message || 'Pairing request failed. Please try again.' });
+    }
+});
+
+app.get('/api/web/status', (req, res) => {
+    const checked = validateNumber(req.query.number);
+    if (checked.error) return res.json({ status: 'idle' });
+    res.json({ number: checked.number, status: pairSystem.getSessionStatus(checked.number) });
+});
+
+app.get('/api/web/stats', (req, res) => {
+    const stats = pairSystem.getStats();
+    res.json({
+        totalPairs: stats.total,
+        onlinePairs: stats.online,
+        offlinePairs: stats.offline,
+        uptimeSeconds: Math.floor((Date.now() - serverStartedAt) / 1000),
+        totalFeatures: countFeatures(),
+        countries: pairSystem.getCountryStats()
+    });
+});
+
+/* -------------------------------------------------------------------------- */
+/*  API-key protected routes — for programmatic / server-to-server access.      */
+/* -------------------------------------------------------------------------- */
+
 app.get('/api/pair/status', requireApiKey, (req, res) => {
     const checked = validateNumber(req.query.number);
     if (checked.error) return res.status(400).json(checked);
     res.json({ number: checked.number, status: pairSystem.getSessionStatus(checked.number) });
 });
 
-app.post('/api/pair', requireApiKey, checkRateLimit, async (req, res) => {
+app.post('/api/pair', requireApiKey, apiRateLimit, async (req, res) => {
     const checked = validateNumber(req.body?.number);
     if (checked.error) return res.status(400).json(checked);
     try {
@@ -110,10 +201,19 @@ app.get('/api/pairs', requireApiKey, (req, res) => {
 });
 
 const server = app.listen(PORT, async () => {
-    if (!API_KEY) console.warn('⚠️ PAIRING_API_KEY is not set; pairing routes are disabled.');
-    console.log(`🚀 SKYBLUE-MD pairing server listening on port ${PORT}`);
-    await pairSystem.restorePairs(null);
+    if (!API_KEY) console.warn('⚠️ PAIRING_API_KEY is not set; the key-protected API routes are disabled (the public website still works).');
+    console.log(`🚀 ${global.botname} pairing server listening on port ${PORT}`);
+    try {
+        await pairSystem.restorePairs(null);
+    } catch (error) {
+        console.error('⚠️ Failed to restore existing pairs:', error.message || error);
+    }
 });
+
+// Tune the HTTP server for many small, fast pairing requests.
+server.keepAliveTimeout = 30000;
+server.headersTimeout = 35000;
+server.requestTimeout = 60000;
 
 async function shutdown(signal) {
     console.log(`Received ${signal}; closing pairing server.`);

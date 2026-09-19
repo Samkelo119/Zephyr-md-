@@ -4,35 +4,79 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07111f">
+  <meta name="description" content="Link your WhatsApp to Zephyr MD with a real pairing code generated live by the pairing server.">
   <title>Zephyr MD · Pair your WhatsApp</title>
   <style>
-    :root{color-scheme:dark;--bg:#07111f;--card:#0d1b2f;--line:#1c3555;--text:#eff6ff;--muted:#9fb2ca;--green:#25d366;--blue:#67a9ff}
+    :root{
+      color-scheme:dark;
+      --bg:#07111f;--card:#0d1b2f;--line:#1c3555;--text:#eff6ff;--muted:#9fb2ca;
+      --green:#25d366;--green-dim:#0f5132;--blue:#67a9ff;--danger:#ff7b7b;--amber:#ffce6b;
+    }
     *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(circle at 10% 0%,#17365c 0,transparent 38%),radial-gradient(circle at 100% 100%,#143b35 0,transparent 34%),var(--bg);display:grid;place-items:center;padding:24px}
-    .shell{width:min(720px,100%);position:relative}
-    .glow{position:absolute;inset:-80px -40px auto auto;width:220px;height:220px;background:#25d36622;filter:blur(50px);border-radius:50%;pointer-events:none}
-    .card{position:relative;background:linear-gradient(145deg,#10233dF2,#0a1729F2);border:1px solid var(--line);border-radius:28px;padding:clamp(24px,5vw,52px);box-shadow:0 28px 90px #0008}
+    html,body{margin:0}
+    body{
+      min-height:100vh;
+      font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 8% -5%,#17365c 0,transparent 40%),
+        radial-gradient(circle at 100% 105%,#123b34 0,transparent 38%),
+        var(--bg);
+      display:grid;place-items:center;padding:24px;
+    }
+    .shell{width:min(760px,100%);position:relative}
+    .glow{position:absolute;inset:-90px -40px auto auto;width:240px;height:240px;background:#25d36622;filter:blur(60px);border-radius:50%;pointer-events:none}
+    .card{
+      position:relative;background:linear-gradient(150deg,rgba(16,35,61,.96),rgba(10,23,41,.96));
+      border:1px solid var(--line);border-radius:28px;padding:clamp(22px,5vw,50px);
+      box-shadow:0 30px 90px rgba(0,0,0,.55);backdrop-filter:blur(6px);
+    }
     .eyebrow{display:flex;gap:10px;align-items:center;color:var(--green);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
-    .dot{width:9px;height:9px;background:var(--green);border-radius:50%;box-shadow:0 0 16px var(--green)}
-    h1{font-size:clamp(32px,7vw,60px);line-height:.98;letter-spacing:-.055em;margin:22px 0 16px;max-width:560px}
-    .lead{color:var(--muted);font-size:16px;line-height:1.7;max-width:560px;margin:0}
-    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:30px 0}
+    .dot{width:9px;height:9px;background:var(--green);border-radius:50%;box-shadow:0 0 16px var(--green);animation:pulse 1.8s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    h1{font-size:clamp(30px,6.4vw,54px);line-height:1;letter-spacing:-.05em;margin:20px 0 14px;max-width:600px}
+    .lead{color:var(--muted);font-size:16px;line-height:1.7;max-width:600px;margin:0}
+
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:26px 0 4px}
+    .stat{border:1px solid #ffffff12;background:#ffffff06;border-radius:16px;padding:14px 12px;text-align:center}
+    .stat .num{font-size:clamp(18px,4vw,26px);font-weight:900;letter-spacing:-.02em}
+    .stat .lbl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.1em;margin-top:4px}
+    .stat.online .num{color:var(--green)}
+
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0}
     .step{border:1px solid #ffffff12;background:#ffffff06;border-radius:16px;padding:14px}
     .step b{display:block;color:var(--blue);font-size:12px;margin-bottom:7px}
-    .step span{color:#dce8f6;font-size:13px;line-height:1.35}
+    .step span{color:#dce8f6;font-size:13px;line-height:1.4}
+
     label{display:block;color:#c8d7e9;font-size:13px;font-weight:700;margin:0 0 9px}
     .row{display:flex;gap:10px}
-    input{min-width:0;flex:1;border:1px solid #315071;border-radius:14px;background:#06101e;color:var(--text);padding:15px 16px;font-size:16px;outline:none}
+    input{min-width:0;flex:1;border:1px solid #315071;border-radius:14px;background:#06101e;color:var(--text);padding:15px 16px;font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s}
     input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #67a9ff22}
-    button{border:0;border-radius:14px;background:var(--green);color:#06200f;font-weight:900;padding:0 20px;font-size:15px;cursor:pointer;white-space:nowrap}
-    button:disabled{opacity:.6;cursor:wait}
-    .result{min-height:84px;margin-top:18px;border:1px dashed #315071;border-radius:16px;padding:18px;text-align:center;color:var(--muted)}
-    .code{font:900 clamp(27px,7vw,46px)/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em;color:var(--green);user-select:all}
-    .success{color:#a8f3c4;font-weight:800}.error{color:#ffb4b4;font-weight:700}
+    button{border:0;border-radius:14px;background:var(--green);color:#06200f;font-weight:900;padding:0 22px;font-size:15px;cursor:pointer;white-space:nowrap;transition:transform .1s,opacity .15s}
+    button:active{transform:scale(.97)}
+    button:disabled{opacity:.55;cursor:wait}
+
+    .result{min-height:92px;margin-top:18px;border:1px dashed #315071;border-radius:16px;padding:18px;text-align:center;color:var(--muted)}
+    .code-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+    .code{font:900 clamp(28px,8vw,48px)/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;color:var(--green);user-select:all}
+    .copy{background:#0f5132;color:#c9ffdd;border:1px solid #1f6f47;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700}
+    .status-pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid #ffffff18;margin-top:12px}
+    .status-pill .sdot{width:8px;height:8px;border-radius:50%;background:var(--amber)}
+    .status-pill.connected{color:#a8f3c4;border-color:#1f6f47;background:#0f513233}
+    .status-pill.connected .sdot{background:var(--green)}
+    .status-pill.waiting .sdot{animation:pulse 1.2s infinite}
+
+    .success{color:#a8f3c4;font-weight:800}
+    .error{color:var(--danger);font-weight:700}
     .hint{color:var(--muted);font-size:12px;line-height:1.55;margin:12px 0 0}
-    .footer{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:28px;padding-top:20px;border-top:1px solid #ffffff12;color:var(--muted);font-size:12px}
+    .footer{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-top:26px;padding-top:18px;border-top:1px solid #ffffff12;color:var(--muted);font-size:12px}
     a{color:#9ec8ff;text-decoration:none}a:hover{text-decoration:underline}
-    @media(max-width:560px){.steps{grid-template-columns:1fr}.row{flex-direction:column}button{padding:15px}.footer{align-items:flex-start;flex-direction:column}}
+    @media(max-width:600px){
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .steps{grid-template-columns:1fr}
+      .row{flex-direction:column}button{padding:15px}
+      .footer{align-items:flex-start;flex-direction:column}
+    }
   </style>
 </head>
 <body>
@@ -41,69 +85,174 @@
     <section class="card">
       <div class="eyebrow"><span class="dot"></span> Zephyr MD · live pairing server</div>
       <h1>Connect your WhatsApp to the bot.</h1>
-      <p class="lead">Enter the full number with country code. The server asks WhatsApp for a real pairing code; it does not invent or reuse a fixed code.</p>
+      <p class="lead">Enter your full number with country code. The pairing server asks WhatsApp for a real, one-time code in real time — it never invents or reuses a fixed code.</p>
+
+      <div class="stats" id="stats" aria-live="polite">
+        <div class="stat online"><div class="num" id="s-online">–</div><div class="lbl">Online</div></div>
+        <div class="stat"><div class="num" id="s-total">–</div><div class="lbl">Paired</div></div>
+        <div class="stat"><div class="num" id="s-features">–</div><div class="lbl">Features</div></div>
+        <div class="stat"><div class="num" id="s-uptime">–</div><div class="lbl">Uptime</div></div>
+      </div>
+
       <div class="steps">
-        <div class="step"><b>01 · Number</b><span>Use digits only, for example 27621834910.</span></div>
+        <div class="step"><b>01 · Number</b><span>Digits only with country code, e.g. 27621834910.</span></div>
         <div class="step"><b>02 · Code</b><span>Copy the code shown below before it expires.</span></div>
         <div class="step"><b>03 · WhatsApp</b><span>Linked Devices → Link with phone number.</span></div>
       </div>
-      <form id="pair-form">
+
+      <form id="pair-form" autocomplete="off">
         <label for="number">WhatsApp number</label>
         <div class="row">
           <input id="number" name="number" inputmode="numeric" autocomplete="tel" placeholder="27621834910" maxlength="15" required>
           <button id="submit" type="submit">Get pairing code</button>
         </div>
       </form>
+
       <div id="result" class="result" role="status" aria-live="polite">Your pairing code will appear here.</div>
-      <p class="hint">Keep this page private while pairing. Once connected, the paired number is treated as the owner of its bot session, so owner and group-admin commands work from that WhatsApp account.</p>
+
+      <p class="hint">Keep this page private while pairing. Once connected, the paired number becomes the owner of its own bot session, so owner and group-admin commands work from that WhatsApp account.</p>
+
       <div class="footer">
         <span>Powered by Zephyr MD</span>
         <a href="https://whatsapp.com/channel/0029Vb8p6DV8aKvNTp6n8n45" target="_blank" rel="noopener">Join the WhatsApp channel →</a>
       </div>
     </section>
   </main>
+
   <script>
     const form = document.getElementById('pair-form');
     const input = document.getElementById('number');
     const button = document.getElementById('submit');
     const result = document.getElementById('result');
-    let statusTimer;
-    const clean = value => value.replace(/\D/g, '');
+    let statusTimer = null;
+    let statusStopAt = 0;
+
+    const clean = value => (value || '').replace(/\D/g, '');
     const message = (text, className = '') => { result.className = 'result ' + className; result.textContent = text; };
-    async function checkStatus(number) {
+
+    function fmtUptime(sec){
+      sec = Math.max(0, Math.floor(sec || 0));
+      const d = Math.floor(sec/86400), h = Math.floor((sec%86400)/3600), m = Math.floor((sec%3600)/60);
+      if (d) return d + 'd ' + h + 'h';
+      if (h) return h + 'h ' + m + 'm';
+      return m + 'm';
+    }
+
+    // Fetch with timeout so the UI never hangs on a slow/broken connection.
+    async function fetchJSON(url, options = {}, timeoutMs = 12000){
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), timeoutMs);
       try {
-        const response = await fetch('/api/pair-status?number=' + encodeURIComponent(number), { cache: 'no-store' });
-        const data = await response.json();
-        if (data.status === 'connected') {
-          clearInterval(statusTimer);
-          message('✓ +' + number + ' is connected. Owner commands are now enabled.', 'success');
-        }
+        const res = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
+        let data = {};
+        try { data = await res.json(); } catch (_) {}
+        return { ok: res.ok, status: res.status, data };
+      } finally {
+        clearTimeout(t);
+      }
+    }
+
+    async function loadStats(){
+      try {
+        const { ok, data } = await fetchJSON('/api/web/stats', {}, 8000);
+        if (!ok || !data) return;
+        document.getElementById('s-online').textContent = data.onlinePairs ?? 0;
+        document.getElementById('s-total').textContent = data.totalPairs ?? 0;
+        document.getElementById('s-features').textContent = data.totalFeatures ? data.totalFeatures : '–';
+        document.getElementById('s-uptime').textContent = fmtUptime(data.uptimeSeconds);
       } catch (_) {}
     }
+
+    function renderCode(number, code){
+      const safeCode = String(code).replace(/[^A-Z0-9-]/gi, '').toUpperCase();
+      result.className = 'result';
+      result.innerHTML =
+        '<div class="code-wrap">' +
+          '<div class="code" id="code-value">' + safeCode + '</div>' +
+          '<button type="button" class="copy" id="copy-btn">Copy code</button>' +
+          '<div class="status-pill waiting" id="pill"><span class="sdot"></span><span id="pill-text">Waiting for you to enter the code…</span></div>' +
+        '</div>' +
+        '<div class="hint">Open WhatsApp → Linked Devices → Link with phone number, then enter this code. It expires quickly, so act fast.</div>';
+
+      const copyBtn = document.getElementById('copy-btn');
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(safeCode);
+          copyBtn.textContent = 'Copied ✓';
+          setTimeout(() => { copyBtn.textContent = 'Copy code'; }, 1600);
+        } catch (_) {
+          copyBtn.textContent = 'Copy failed';
+        }
+      });
+
+      startStatusPolling(number);
+    }
+
+    function stopStatusPolling(){
+      if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
+    }
+
+    function startStatusPolling(number){
+      stopStatusPolling();
+      statusStopAt = Date.now() + 3 * 60 * 1000; // poll for up to 3 minutes
+      statusTimer = setInterval(async () => {
+        if (Date.now() > statusStopAt) { stopStatusPolling(); return; }
+        try {
+          const { data } = await fetchJSON('/api/web/status?number=' + encodeURIComponent(number), {}, 8000);
+          const pill = document.getElementById('pill');
+          const pillText = document.getElementById('pill-text');
+          if (!pill || !pillText) { stopStatusPolling(); return; }
+          if (data.status === 'connected') {
+            stopStatusPolling();
+            pill.className = 'status-pill connected';
+            pillText.textContent = '+' + number + ' connected — owner commands enabled.';
+          } else if (data.status === 'reconnecting' || data.status === 'connecting') {
+            pillText.textContent = 'Linking… keep WhatsApp open.';
+          }
+        } catch (_) {}
+      }, 3500);
+    }
+
     form.addEventListener('submit', async event => {
       event.preventDefault();
       const number = clean(input.value);
-      if (number.length < 8 || number.length > 15) return message('Enter a valid international number with country code.', 'error');
-      clearInterval(statusTimer);
+      if (number.length < 8 || number.length > 15) {
+        return message('Enter a valid international number with country code (digits only).', 'error');
+      }
+      stopStatusPolling();
       button.disabled = true;
+      button.textContent = 'Generating…';
       message('Requesting a fresh WhatsApp pairing code…');
       try {
-        const response = await fetch('/api/pair', {
+        const { ok, status, data } = await fetchJSON('/api/web/pair', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ number })
-        });
-        const data = await response.json();
-        if (!response.ok || !data.code) throw new Error(data.error || 'The server could not create a pairing code.');
-        result.className = 'result';
-        result.innerHTML = '<div class="code">' + String(data.code).replace(/[^A-Z0-9-]/g, '') + '</div><div class="hint">Enter this code in WhatsApp now. It normally expires quickly.</div>';
-        statusTimer = setInterval(() => checkStatus(number), 4000);
+        }, 30000);
+
+        if (!ok || !data.code) {
+          const err = data.error || (status === 429
+            ? 'Too many attempts. Please wait a few minutes and try again.'
+            : 'The server could not create a pairing code. Please try again.');
+          throw new Error(err);
+        }
+        renderCode(data.number || number, data.code);
+        loadStats();
       } catch (error) {
-        message(error.message || 'Pairing failed. Please try again.', 'error');
+        const msg = error.name === 'AbortError'
+          ? 'The request timed out. Please check your connection and try again.'
+          : (error.message || 'Pairing failed. Please try again.');
+        message(msg, 'error');
       } finally {
         button.disabled = false;
+        button.textContent = 'Get pairing code';
       }
     });
+
+    input.addEventListener('input', () => { input.value = clean(input.value); });
+
+    loadStats();
+    setInterval(loadStats, 15000);
   </script>
 </body>
 </html>
